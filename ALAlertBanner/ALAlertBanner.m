@@ -55,7 +55,9 @@ static CGFloat const kForceHideAnimationDuration = 0.1f;
     #define AL_SINGLELINE_TEXT_HEIGHT(text, font) [text length] > 0 ? [text sizeWithAttributes:nil].height : 0.f;
     #define AL_MULTILINE_TEXT_HEIGHT(text, font, maxSize, mode) [text length] > 0 ? [text boundingRectWithSize:maxSize \
                                                                                                        options:(NSStringDrawingUsesLineFragmentOrigin|NSStringDrawingUsesFontLeading) \
-                                                                                                    attributes:nil \
+                                                                                                    attributes:@{ \
+                                                                                                            NSFontAttributeName : font \
+                                                                                                            } \
                                                                                                        context:NULL].size.height : 0.f;
 #else
     #define AL_SINGLELINE_TEXT_HEIGHT(text, font) [text length] > 0 ? [text sizeWithFont:font].height : 0.f;
@@ -147,8 +149,8 @@ static CGFloat const kForceHideAnimationDuration = 0.1f;
     self.layer.shadowOpacity = 0.5f;
     self.tag = arc4random_uniform(SHRT_MAX);
     
-    [self setupSubviews];
     [self setupInitialValues];
+    [self setupSubviews];
 }
 
 - (void)setupInitialValues {
@@ -160,6 +162,7 @@ static CGFloat const kForceHideAnimationDuration = 0.1f;
     _secondsToShow = 3.5;
     _allowTapToDismiss = YES;
     _shouldForceHide = NO;
+    _bannerGradient = NO;
     
     manager = [ALAlertBannerManager sharedManager];
     self.delegate = (ALAlertBannerManager <ALAlertBannerViewDelegate> *)manager;
@@ -184,7 +187,7 @@ static CGFloat const kForceHideAnimationDuration = 0.1f;
     
     _subtitleLabel = [[UILabel alloc] init];
     _subtitleLabel.backgroundColor = [UIColor clearColor];
-    _subtitleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:10.f];
+    _subtitleLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:12.f];
     _subtitleLabel.textColor = [UIColor colorWithWhite:1.f alpha:0.9f];
     _subtitleLabel.textAlignment = NSTextAlignmentLeft;
     _subtitleLabel.numberOfLines = 0;
@@ -711,16 +714,22 @@ static CGFloat const kForceHideAnimationDuration = 0.1f;
             fillColor = [UIColor colorWithRed:(211/255.0) green:(209/255.0) blue:(100/255.0) alpha:1.f];
             break;
     }
-    
-    NSArray *colorsArray = [NSArray arrayWithObjects:(id)[fillColor CGColor], (id)[[fillColor darkerColor] CGColor], nil];
-    CGColorSpaceRef colorSpace =  CGColorSpaceCreateDeviceRGB();
-    const CGFloat locations[2] = {0.f, 1.f};
-    CGGradientRef gradient = CGGradientCreateWithColors(colorSpace, (__bridge CFArrayRef)colorsArray, locations);
-    
-    CGContextDrawLinearGradient(context, gradient, CGPointZero, CGPointMake(0.f, self.bounds.size.height), 0.f);
-    
-    CGGradientRelease(gradient);
-    CGColorSpaceRelease(colorSpace);
+
+    if (_bannerGradient) {
+        NSArray *colorsArray = [NSArray arrayWithObjects:(id)[fillColor CGColor], (id)[[fillColor darkerColor] CGColor], nil];
+        CGColorSpaceRef colorSpace =  CGColorSpaceCreateDeviceRGB();
+        const CGFloat locations[2] = {0.f, 1.f};
+        CGGradientRef gradient = CGGradientCreateWithColors(colorSpace, (__bridge CFArrayRef)colorsArray, locations);
+        
+        CGContextDrawLinearGradient(context, gradient, CGPointZero, CGPointMake(0.f, self.bounds.size.height), 0.f);
+        
+        CGGradientRelease(gradient);
+        CGColorSpaceRelease(colorSpace);
+    }
+    else {
+        CGContextSetFillColorWithColor(context, fillColor.CGColor);
+        CGContextFillRect(context, rect);
+    }
     
     CGContextSetFillColorWithColor(context, [UIColor colorWithRed:0.f green:0.f blue:0.f alpha:0.6f].CGColor);
     CGContextFillRect(context, CGRectMake(0.f, rect.size.height - 1.f, rect.size.width, 1.f));

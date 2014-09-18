@@ -89,6 +89,13 @@ typedef enum {
 @property (nonatomic) CGFloat bannerOpacity;
 
 /**
+ Banner gradient, default is NO.
+ 
+ */
+@property (nonatomic) BOOL bannerGradient;
+
+
+/**
  The default methods to customize and display a banner.
  */
 + (ALAlertBanner *)alertBannerForView:(UIView *)view style:(ALAlertBannerStyle)style position:(ALAlertBannerPosition)position title:(NSString *)title;
